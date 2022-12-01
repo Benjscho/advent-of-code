@@ -19,11 +19,13 @@ fn main() {
             }
         } 
     }
-    let result = most_calories(puzzle_input); 
-    println!("The answer is {result}."); 
+    let result_one = most_calories(&puzzle_input); 
+    println!("The elf with the most calories has {result_one}."); 
+    let result_two = top_three_cals_total(&puzzle_input); 
+    println!("The three top elves have {result_two}."); 
 }
 
-fn most_calories(elves: Vec<Vec<i32>>) -> i32 {
+fn most_calories(elves: &Vec<Vec<i32>>) -> i32 {
     println!("There are {} elves", elves.len()); 
     let mut max_cals = 0; 
     for elf in elves {
@@ -34,4 +36,19 @@ fn most_calories(elves: Vec<Vec<i32>>) -> i32 {
         max_cals = max(max_cals, cals);
     }
     max_cals
+}
+
+fn top_three_cals_total(elves: &Vec<Vec<i32>>) -> i32 {
+    let mut elf_cals = vec![0; elves.len()];
+    let mut curr_elf = 0;
+    for elf in elves {
+        elf_cals[curr_elf] = elf.iter().sum();
+        curr_elf += 1;
+    }
+    elf_cals.sort_by(|a, b| b.cmp(a));
+    let mut result = 0;
+    for i in 0..3 {
+        result += elf_cals[i];
+    }
+    result
 }
