@@ -1,5 +1,7 @@
-use std::{collections::HashMap, fs::File};
+use core::fmt;
+use std::{collections::{HashMap, BTreeMap}, fs::File, cell::RefCell, rc::Rc};
 
+use indexmap::IndexMap;
 use nom::{
     branch::alt,
     bytes::complete::{tag, take, take_while1},
@@ -9,7 +11,91 @@ use nom::{
 };
 
 fn main() {
-    println!("Hello, world!");
+    let input = include_str!("input.txt");
+
+    let root = Rc::new(RefCell::new(Node::default()));
+    let mut node = root.clone();
+
+    let lines = input.lines().map(|l| all_consuming(parse_line)(l).finish().unwrap().1);
+
+    for line in lines {
+        match line.unwrap() {
+            LineInput::List => {},
+            LineInput::Move { target } => match target.as_str() {
+                "/" => {},
+                ".." => {
+                    let parent = node.borrow().parent.clone().unwrap();
+                    node = parent; 
+                }
+                _ => {
+                    let child = node.borrow_mut().children.entry(target).or_default().clone();
+                    node = child;
+                }
+            },
+            LineInput::Dir { name } => {
+                let entry = node.borrow_mut().children.entry(name).or_default().clone();
+                entry.borrow_mut().parent = Some(node.clone()); 
+            },
+            LineInput::File { size, name } => {
+                let entry = node.borrow_mut().children.entry(name).or_default().clone();
+                entry.borrow_mut().size = size as usize;
+                entry.borrow_mut().parent = Some(node.clone());
+            }
+        }
+    }
+
+    //let sum = all_dirs(root)
+    //    .map(|d| d.borrow().total_size())
+    //    .filter(|&s| s <= 100_000)
+    //    .inspect(|s| {
+    //        dbg!(s);
+    //    })
+    //    .sum::<u64>();
+    //dbg!(sum);
+
+
+    let total_used = root.borrow().total_size();
+    let free = 70_000_000 - total_used; 
+    dbg!(free);
+
+    let delete_dir = all_dirs(root)
+        .map(|d| d.borrow().total_size())
+        .filter(|&s| s >= 30_000_000 - free)
+        .min();
+    dbg!(delete_dir); 
+}
+
+fn all_dirs(n: NodeHandle) -> Box<dyn Iterator<Item = NodeHandle>> {
+    let children = n.borrow().children.values().cloned().collect::<Vec<_>>();
+
+    Box::new(
+        std::iter::once(n).chain(
+            children
+                .into_iter()
+                .filter_map(|c| {
+                    if c.borrow().is_dir() {
+                        Some(all_dirs(c))
+                    } else {
+                        None
+                    }
+                })
+                .flatten(),
+        )
+    )
+}
+
+impl Node {
+    fn is_dir(&self) -> bool {
+        self.size == 0 && !self.children.is_empty()
+    }
+
+    fn total_size(&self) -> u64 {
+        self.children
+            .values()
+            .map(|child| child.borrow().total_size())
+            .sum::<u64>()
+            + self.size as u64
+    }
 }
 
 
@@ -38,7 +124,7 @@ fn parse_dir(i: &str) -> IResult<&str, LineInput> {
     let (i, _) = tag("dir ")(i)?;
     let (i, name) = take_while1(|c: char| c.is_alphanumeric())(i)?;
 
-    Ok((i, LineInput::Dir {total_size: 0, objects: HashMap::new(), name: name.to_string()}))
+    Ok((i, LineInput::Dir {name: name.to_string()}))
 }
 
 fn parse_move_command(i: &str) -> IResult<&str, LineInput> {
@@ -69,8 +155,6 @@ enum LineInput {
         name: String
     },
     Dir {
-        total_size: u64,
-        objects: HashMap<String, LineInput>,
         name: String
     }, 
     Move {
@@ -78,6 +162,25 @@ enum LineInput {
     },
     List
 }
+
+type NodeHandle = Rc<RefCell<Node>>;
+
+#[derive(Default)]
+struct Node {
+    size: usize,
+    children: IndexMap<String, NodeHandle>,
+    parent: Option<NodeHandle>
+}
+
+impl fmt::Debug for Node {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Node")
+            .field("size", &self.size)
+            .field("children", &self.children)
+            .finish()
+    }
+}
+
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum Command {
@@ -107,7 +210,7 @@ mod tests {
     #[test]
     fn test_dir_parse() {
         let dir_string = "dir a";
-        let actual = LineInput::Dir {total_size: 0, objects: HashMap::new(), name: "a".to_string()}; 
+        let actual = LineInput::Dir {name: "a".to_string()}; 
         let (_, expected) = parse_dir(dir_string).unwrap();
 
         assert_eq!(actual, expected);
@@ -152,7 +255,7 @@ mod tests {
             LineInput::Move {target: "e".to_string()},
             LineInput::File { size: 1234, name: "myfile.txt".to_string()},
             LineInput::List,
-            LineInput::Dir { total_size: 0, objects: HashMap::new(), name: "whatever".to_string()}
+            LineInput::Dir {  name: "whatever".to_string()}
         ];
 
         for (s, expected) in commands.iter().zip(expected_list.iter()) {
