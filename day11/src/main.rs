@@ -3,8 +3,9 @@ use std::collections::VecDeque;
 use nom::{IResult, bytes::complete::{tag, take_till, take_while, take_until, take}, branch::alt, combinator::{map_res, opt}, sequence::tuple, character::complete::digit1, multi::separated_list0};
 
 fn main() {
-    println!("Hello, world!");
-
+    let input = include_str!("input.txt");
+    let res = solve_part1(input); 
+    dbg!(res);
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -21,14 +22,19 @@ fn solve_part1(i: &str) -> i64 {
         |s: &str| parse_monkey(s).unwrap().1
     ).collect();
 
+    for _ in 0..20 {
+        one_round(&mut monkeys);
+    }
 
-
-    unimplemented!()
+    let mut checks: Vec<i64> = monkeys.iter().map(|m: &Monkey| m.item_checks).collect();
+    checks.sort_by(|a,b| b.cmp(a));
+    checks[0] * checks[1]
 }
 
 fn one_round(monkeys: &mut Vec<Monkey>) {
     for i in 0..monkeys.len() {
         while !monkeys[i].items.is_empty() {
+            monkeys[i].item_checks += 1;
             let item = monkeys[i].items.pop_front();
             let nw = next_worry_level(item.unwrap(), monkeys[i].operation) / 3; 
             let next_monkey = monkeys[i].next_monkey;
