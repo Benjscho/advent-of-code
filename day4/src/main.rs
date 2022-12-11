@@ -1,9 +1,9 @@
 fn main() {
     let input = include_str!("input.txt");
-    let result = input.lines().fold(0, |x, pair| x + full_overlap(pair)); 
-    println!("Number of completely overlapping pairs: {}", result); 
-    let result = input.lines().fold(0, |x, pair| x + any_overlap(pair)); 
-    println!("Number of partially overlapping pairs: {}", result); 
+    let result = input.lines().fold(0, |x, pair| x + full_overlap(pair));
+    println!("Number of completely overlapping pairs: {}", result);
+    let result = input.lines().fold(0, |x, pair| x + any_overlap(pair));
+    println!("Number of partially overlapping pairs: {}", result);
 }
 
 fn full_overlap(s: &str) -> u32 {
@@ -15,12 +15,7 @@ fn full_overlap(s: &str) -> u32 {
     let ea = ea.parse::<u32>().unwrap();
     let eb = eb.parse::<u32>().unwrap();
 
-    if (sa <= sb && ea >= eb) || 
-        (sb <= sa && eb >= ea) {
-        1
-    } else {
-        0
-    }
+    u32::from((sa <= sb && ea >= eb) || (sb <= sa && eb >= ea))
 }
 
 fn any_overlap(s: &str) -> u32 {
@@ -33,7 +28,7 @@ fn any_overlap(s: &str) -> u32 {
     let eb = eb.parse::<u32>().unwrap();
 
     // Pair doesn't overlap when the end of the first section is before
-    // the start of the other. 
+    // the start of the other.
     if ea < sb || sa > eb {
         0
     } else {

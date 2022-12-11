@@ -35,7 +35,7 @@ impl Ship {
             for i in 0..num_lines {
                 let c;
                 (c, state) = state.split_at(3);
-                if state.len() > 0 {
+                if !state.is_empty() {
                     (_, state) = state.split_at(1); // Split at keeps the midpoint so we need to
                 }
                 // discard that
@@ -92,6 +92,5 @@ impl Ship {
                 self.crates.get_mut(dest).unwrap().push(c);
             }
         }
-
     }
 }

@@ -16,11 +16,11 @@ fn get_marker(message: &str, marker_len: usize) -> usize {
     let mut pos = marker_len;
     for c in remainder.chars() {
         if is_marker(&pm) {
-            return pos
+            return pos;
         }
         pm.remove(0);
         pm.push(c);
-        pos += 1; 
+        pos += 1;
     }
     pos
 }
@@ -29,7 +29,7 @@ fn is_marker(pm: &str) -> bool {
     let mut a: HashSet<char> = HashSet::new();
     for c in pm.chars() {
         if a.contains(&c) {
-            return false
+            return false;
         } else {
             a.insert(c);
         }

@@ -1,17 +1,18 @@
 use id_tree::*;
-use std::{collections::HashMap, fs::File};
 
 use nom::{
     branch::alt,
     bytes::complete::{tag, take_while1},
-    combinator::{all_consuming, map, map_res, opt},
-    sequence::{delimited, preceded, tuple},
+    combinator::{all_consuming, map, map_res},
+    sequence::tuple,
     Finish, IResult,
 };
 
 fn main() {
     println!("Hello, world!");
-    let input = include_str!("input.txt").lines().map(|l| all_consuming(parse_line)(l).finish().unwrap().1);
+    let input = include_str!("input.txt")
+        .lines()
+        .map(|l| all_consuming(parse_line)(l).finish().unwrap().1);
 
     let mut tree: Tree<FsItem> = TreeBuilder::new().build();
 
@@ -29,52 +30,54 @@ fn main() {
     for line in input {
         println!("{:?}", line);
         match line.unwrap() {
-            Line::Item(item) => {
-                match item {
-                    Item::File(size, name) => {
-                        let node = Node::new(FsItem {size, name}); 
-                        tree.insert(node, InsertBehavior::UnderNode(&curr)); 
-                    },
-                    Item::Dir(_) => {}
+            Line::Item(item) => match item {
+                Item::File(size, name) => {
+                    let node = Node::new(FsItem { size, name });
+                    tree.insert(node, InsertBehavior::UnderNode(&curr));
                 }
+                Item::Dir(_) => {}
             },
-            Line::Command(command) => {
-                match command {
-                    Command::Move(target) => match target.as_str() {
-                        "/" => {},
-                        ".." => {
-                            curr = tree.get(&curr).unwrap().parent().unwrap().clone();
-                        },
-                        _ => {
-                            let node = Node::new(FsItem {name: target.clone(), size: 0}); 
-                            curr = tree.insert(node, InsertBehavior::UnderNode(&curr)).unwrap();
-                        }
-                    },
-                    Command::List => {}
-                }
-            }
+            Line::Command(command) => match command {
+                Command::Move(target) => match target.as_str() {
+                    "/" => {}
+                    ".." => {
+                        curr = tree.get(&curr).unwrap().parent().unwrap().clone();
+                    }
+                    _ => {
+                        let node = Node::new(FsItem {
+                            name: target.clone(),
+                            size: 0,
+                        });
+                        curr = tree.insert(node, InsertBehavior::UnderNode(&curr)).unwrap();
+                    }
+                },
+                Command::List => {}
+            },
         }
     }
 
     let sum: u64 = tree
-        .traverse_pre_order(tree.root_node_id().unwrap()).unwrap()
+        .traverse_pre_order(tree.root_node_id().unwrap())
+        .unwrap()
         .filter(|n| !n.children().is_empty())
         .map(|n| total_size(&tree, n))
         .filter(|&t| t <= 100_000)
         .sum();
     println!("Sum is {}", sum);
 
-    let used_space = 70_000_000 - total_size(&tree, tree.get(tree.root_node_id().unwrap()).unwrap());
+    let used_space =
+        70_000_000 - total_size(&tree, tree.get(tree.root_node_id().unwrap()).unwrap());
     let min_space_to_free = 30_000_000 - used_space;
 
     let space_to_free: u64 = tree
-        .traverse_pre_order(tree.root_node_id().unwrap()).unwrap()
+        .traverse_pre_order(tree.root_node_id().unwrap())
+        .unwrap()
         .filter(|n| !n.children().is_empty())
         .map(|n| total_size(&tree, n))
         .filter(|&t| t >= min_space_to_free)
-        .min().unwrap();
+        .min()
+        .unwrap();
     println!("Space to free is {}", space_to_free);
-
 }
 
 fn total_size(tree: &Tree<FsItem>, node: &Node<FsItem>) -> u64 {

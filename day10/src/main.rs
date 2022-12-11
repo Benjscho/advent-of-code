@@ -14,34 +14,32 @@ fn solve_part1(input: &str) -> i64 {
     let mut ops: VecDeque<Option<i64>> = VecDeque::new();
 
     for l in input.lines() {
-        let s = l.split_once(" "); 
+        let s = l.split_once(' ');
 
         match s {
-            Some((_, b)) => {
-                ops.push_back(Some(b.parse::<i64>().unwrap()))
-            },
-            _ => ops.push_back(None)
+            Some((_, b)) => ops.push_back(Some(b.parse::<i64>().unwrap())),
+            _ => ops.push_back(None),
         }
-    };
+    }
 
-    let impt_cycles = vec![20, 60, 100, 140, 180, 220]; 
+    let impt_cycles = vec![20, 60, 100, 140, 180, 220];
 
     let mut x = 1;
     let mut temp: Option<i64> = None;
-    for i in 1..=220 { 
+    for i in 1..=220 {
         if impt_cycles.contains(&i) {
-            res += i*x;
+            res += i * x;
         }
         match temp {
             Some(val) => {
                 x += val;
                 temp = None;
-            }, 
+            }
             None => {
                 let instruction = ops.pop_front();
                 match instruction {
                     Some(x) => temp = x,
-                    _ => ()
+                    _ => (),
                 }
             }
         }
@@ -54,21 +52,18 @@ fn solve_part2(input: &str) -> String {
     let mut ops: VecDeque<Option<i64>> = VecDeque::new();
 
     for l in input.lines() {
-        let s = l.split_once(" "); 
+        let s = l.split_once(' ');
 
         match s {
-            Some((_, b)) => {
-                ops.push_back(Some(b.parse::<i64>().unwrap()))
-            },
-            _ => ops.push_back(None)
+            Some((_, b)) => ops.push_back(Some(b.parse::<i64>().unwrap())),
+            _ => ops.push_back(None),
         }
-    };
-
+    }
 
     let mut res_vec: Vec<char> = vec![];
     let mut x = 1;
     let mut temp: Option<i64> = None;
-    for i in 0..240 { 
+    for i in 0..240 {
         let pixel = i % 40;
         if pixel == 0 && i != 0 {
             res_vec.push('\n');
@@ -82,12 +77,12 @@ fn solve_part2(input: &str) -> String {
             Some(val) => {
                 x += val;
                 temp = None;
-            }, 
+            }
             None => {
                 let instruction = ops.pop_front();
                 match instruction {
                     Some(x) => temp = x,
-                    _ => ()
+                    _ => (),
                 }
             }
         }

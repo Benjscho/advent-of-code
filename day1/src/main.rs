@@ -1,5 +1,5 @@
-use std::{cmp::max, fs}; 
 use std::env;
+use std::{cmp::max, fs};
 
 fn main() {
     env::set_var("RUST_BACKTRACE", "1");
@@ -11,27 +11,27 @@ fn main() {
     for line in elf_contents {
         if line.eq("") {
             puzzle_input.push(Vec::new());
-            curr_elf += 1; 
+            curr_elf += 1;
         } else {
             match line.parse::<i32>() {
                 Ok(n) => puzzle_input.get_mut(curr_elf).unwrap().push(n),
-                _ => ()
+                _ => (),
             }
-        } 
+        }
     }
-    let result_one = most_calories(&puzzle_input); 
-    println!("The elf with the most calories has {result_one}."); 
-    let result_two = top_three_cals_total(&puzzle_input); 
-    println!("The three top elves have {result_two}."); 
+    let result_one = most_calories(&puzzle_input);
+    println!("The elf with the most calories has {result_one}.");
+    let result_two = top_three_cals_total(&puzzle_input);
+    println!("The three top elves have {result_two}.");
 }
 
 fn most_calories(elves: &Vec<Vec<i32>>) -> i32 {
-    println!("There are {} elves", elves.len()); 
-    let mut max_cals = 0; 
+    println!("There are {} elves", elves.len());
+    let mut max_cals = 0;
     for elf in elves {
-        let mut cals = 0; 
+        let mut cals = 0;
         for snack in elf {
-            cals = cals + snack;
+            cals += snack;
         }
         max_cals = max(max_cals, cals);
     }
