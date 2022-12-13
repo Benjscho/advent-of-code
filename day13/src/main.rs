@@ -3,14 +3,20 @@ use std::io::BufRead;
 use nom::{IResult, multi::separated_list0, branch::alt, character::complete::{char, digit0, digit1}, bytes::complete::{tag, take_until, take_while}, sequence::{tuple, delimited}, combinator::{opt, map_res}, error::{ParseError, ErrorKind}};
 
 fn main() {
-    println!("Hello, world!");
+    let input = include_str!("input.txt");
+    let res = solve_part1(input);
+    dbg!(res);
 }
 
-fn solve_part1(i: &str) -> i64 {
+fn solve_part1(i: &str) -> usize {
     let inputs = i.split("\n\n");
     let mut res = 0;
     for (i, pair) in inputs.enumerate() {
-        //let (a, b) = pair.lines()
+        let pair: Vec<Packet> = pair.lines().map(|i: &str| parse_packet(i).unwrap().1).collect();
+        if pair[0] < pair[1] {
+            dbg!(i);
+            res += i + 1;
+        }
     }
     res
 }
@@ -46,20 +52,6 @@ impl Packet {
 }
 
 fn compare_list(a: &[Data], b: &[Data]) -> bool {
-    if a.is_empty() {
-        return true;
-    } 
-    let (x, y) = (a.first(), b.first());
-    match y {
-        None => return false,
-        Some(Data::Num(n)) => {
-
-        },
-        Some(Data::Packets(n)) => {
-
-        }
-    }
-    
     false
 }
 
@@ -90,7 +82,7 @@ mod test {
 
     #[test]
     fn test_part1() {
-        assert_eq!(13, solve_part1(TEST_INPUT)); 
+        assert_eq!(14, solve_part1(TEST_INPUT)); 
     }
 
     #[test]
