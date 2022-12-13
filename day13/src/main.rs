@@ -1,19 +1,26 @@
-use nom::{IResult, multi::separated_list0, character::complete::digit0, bytes::complete::tag};
+use std::io::BufRead;
+
+use nom::{IResult, multi::separated_list0, branch::alt, character::complete::{char, digit0, digit1}, bytes::complete::{tag, take_until, take_while}, sequence::{tuple, delimited}, combinator::{opt, map_res}, error::{ParseError, ErrorKind}};
 
 fn main() {
     println!("Hello, world!");
 }
 
 fn solve_part1(i: &str) -> i64 {
-    unimplemented!()
+    let inputs = i.split("\n\n");
+    let mut res = 0;
+    for (i, pair) in inputs.enumerate() {
+        //let (a, b) = pair.lines()
+    }
+    res
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 struct Packet {
     data: Data
 } 
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Data {
     Packets(Vec<Data>),
     Num(i64)
@@ -27,13 +34,13 @@ fn data_from(v: Vec<i64>) -> Data {
 impl Packet {
     fn default() -> Self {
         Packet {
-            data: Data::Packets(Vec::new())
+            data: Data::Packets(vec![])
         }
     }
 
     fn from(data: Data) -> Self {
         Packet {
-            data
+            data: data
         }
     }
 }
@@ -57,29 +64,21 @@ fn compare_list(a: &[Data], b: &[Data]) -> bool {
 }
 
 fn parse_packet(i: &str) -> IResult<&str, Packet> {
-    let (i, _) = tag("[")(i)?;
-    let (i, data) = parse_list(i)?;
+    let (i, data) = parse_list2(i)?;
     
     Ok((i, Packet::from(data)))
 }
 
-fn parse_list(i: &str) -> IResult<&str, Data> {
-    let mut p = vec![];
-    let (i, nums) = separated_list0(tag(","), digit0)(i)?;
-    for x in &nums {
-        p.push(Data::Num(x.parse::<i64>().unwrap()));
-    }
+fn parse_num(i: &str) -> IResult<&str, Data> {
+    map_res(digit1, |s: &str| {
+        Ok::<Data, ErrorKind>(Data::Num(s.parse::<i64>().unwrap()))
+    })(i)
+}
 
-    match i.chars().next() {
-        Some('[') => {
-            let (i, d) = parse_list(i)?;
-            p.push(d);
-        }
-        _ => ()
-    }
-    dbg!(i, nums);
+fn parse_list2(i: &str) -> IResult<&str, Data> {
+    let (i, data) = delimited(char('['), separated_list0(tag(","), alt((parse_num, parse_list2))), char(']'))(i)?;
 
-    Ok((i, Data::Packets(p)))
+    Ok((i, Data::Packets(data)))
 }
 
 #[cfg(test)]
@@ -100,18 +99,11 @@ mod test {
             "[1,1,3,1,1]",
             "[[1],4]"
         ];
-        let ex2 = vec![];
-        ex2.push(Data::Num(1));
-        let ex = vec![];
-        ex.push(ex2);
-        ex.push(Data::Num(4));
+        let b = Data::Packets(vec![ Data::Packets(vec![Data::Num(1)]), Data::Num(4)]);
         let expected = vec![
             Packet{data: data_from(vec![1,1,3,1,1])},
-            Packet{data: vec![
-                ex2,
-            ]}
+            Packet{data: b}
         ];
-
 
         for (a, e) in inputs.iter().zip(expected) {
             assert_eq!(e, parse_packet(a).unwrap().1);
